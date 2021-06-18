@@ -14,7 +14,6 @@ const BoardingScreen = ({navigation}) => {
 		const isLogin = await AsyncStorage.getItem('token')
 		setToken(isLogin)
 	}
-	console.log(token)
 	const buttonFix = () => {
 		if(token != null){
 			return (

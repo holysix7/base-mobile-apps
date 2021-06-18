@@ -1,53 +1,262 @@
-import {View, ScrollView, ActivityIndicator, Image, Alert, RefreshControl} from 'react-native';
-import React, {useState, useEffect, useCallback } from 'react';
-import { Container, Text, Button, Picker} from 'native-base';
-import axios from 'axios';
-import AsyncStorage from "@react-native-community/async-storage";
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import {View, ScrollView, ActivityIndicator, Image, Alert, RefreshControl} from 'react-native'
+import React, {useState, useEffect, useCallback } from 'react'
+import { Container, Text, Button} from 'native-base'
+import Axios from 'axios'
+import AsyncStorage from "@react-native-community/async-storage"
+import { TouchableOpacity } from 'react-native-gesture-handler'
+import { Picker } from '@react-native-picker/picker'
+import DateTimePicker from '@react-native-community/datetimepicker'
+import CalendarBlack from '../Assets/calendar.png'
+import search from '../Assets/search.png'
+import moment from 'moment'
+import { conditionalExpression } from '@babel/types'
 
 const HomeScreen = ({navigation}) => {
   useEffect(() => {
     cekLogin()
   }, [])
-  const [plant, setPlant] = useState("3")
-  const [token, setToken] = useState(null)
+	var timeNow 	                    = moment()
+  const [refreshing, setRefreshing] = useState(false);
+  const [plant, setPlant]           = useState(0)
+  const [data, setData]             = useState([])
+	const [loading, setLoading]       = useState(true);
+  const [token, setToken]           = useState(null)
+	const [mode, setMode]		          = useState(null)
+	const [show, setShow]		          = useState(false)
+  const [start_date, setStart]      = useState(new Date(timeNow))
+  const [end_date, setEnd]          = useState(new Date(timeNow))
+  const [status, setStatus]         = useState(null)
+	var startDateText 	              = moment(start_date).format("YYYY-MM-DD") 
+	var endDateText 	                = moment(end_date).format("YYYY-MM-DD")
+
 	const cekLogin = async() => {
     const isLogin = await AsyncStorage.getItem('token')
-    // console.log(isLogin)
 		setToken(isLogin)
 	}
+
+  const searchData = async() => {
+    setLoading(false)
+    const headers = {
+      'Authorization': `${token}`, 
+      'Content-Type': 'application/x-www-form-urlencoded', 
+      'Cookie': '__profilin=p%3Dt'
+    }
+    const params = {
+      'sys_plant_id': plant,
+      'start_date': moment(start_date).format("YYYY-MM-DD"),
+      'end_date': moment(end_date).format("YYYY-MM-DD")
+    }
+		Axios.get('http://192.168.131.119:8080/v1/hrd_violations', {params: params, headers: headers})
+		.then(response => {
+			setData(response.data.data)
+			setLoading(true)
+      setStatus(true)
+		})
+		.catch(error => {
+      console.log(error)
+      Alert.alert(
+        "Error",
+        "Hubungi IT Department",
+        [
+          { text: "OK", onPress: () => console.log('Stop API') }
+        ],
+        { cancelable: false }
+      );
+			setLoading(true)
+      setStatus(true)
+		})
+  }
+  
+  const onChange = (event, val) => {
+    const currentDate = val || start_date;
+    setShow(Platform.OS === 'ios');
+    setStart(currentDate)
+  };
+
+  const onChangeEnd = (event, val) => {
+    const currentDate = val || end_date;
+    setShow(Platform.OS === 'ios');
+    setEnd(currentDate)
+  };
+  
+  const showDateModal = () => {
+    if(show == true){
+      if(mode == 'start-date'){
+        return (
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={start_date}
+            maximumDate={end_date}
+            mode={mode}
+            is24Hour={true}
+            display="calendar"
+            onChange={(evt, val) => onChange(evt, val)}
+          />
+        )
+      }else{
+        return (
+          <DateTimePicker
+            testID="dateTimePicker"
+            maximumDate={new Date(timeNow)}
+            minimumDate={start_date}
+            value={end_date}
+            mode={mode}
+            is24Hour={true}
+            display="calendar"
+            onChange={(evt, val) => onChangeEnd(evt, val)}
+          />
+        )
+      }
+    }
+  }
+
+  const functionUpdateMode = (value) => {
+    if(value == 1){
+      showDate('start-date')
+    }else{
+      showDate('end-date')
+    }
+  }
+  
+  const showDate = (val) => {
+    setShow(true)
+    setMode(val)
+  }
+  
+  const dateFunction = () => {
+    if(plant > 0){
+      return(
+        <View style={{flexDirection: 'row'}}>
+          <View style={{flexDirection: 'row', borderWidth: 0.5, borderColor:'#FEA82F', height: 40, width: 150, paddingRight: 5, margin: 5, justifyContent: 'space-around', alignItems: 'center'}}>
+            <View style={{flexDirection: 'column', paddingLeft: 5, flex: 1}}>
+              <Text onPress={() => functionUpdateMode(1)}>{startDateText != null ? startDateText : 'Pilih'}</Text>
+            </View>
+            <View style={{flexDirection: 'column', alignItems: 'flex-end', width: 35, paddingTop: 2}}>
+              <TouchableOpacity onPress={() => functionUpdateMode(1)}>
+                <Image source={CalendarBlack} style={{width: 25, height: 25, marginLeft: 4}}/>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={{flexDirection: 'row', borderWidth: 0.5, borderColor:'#FEA82F', height: 40, width: 150, paddingLeft: 5, margin: 5, justifyContent: 'space-around', alignItems: 'center'}}>
+            <View style={{flexDirection: 'column', paddingLeft: 5, flex: 1}}>
+              <Text onPress={() => functionUpdateMode(2)}>{endDateText != null ? endDateText : 'Pilih'}</Text>
+            </View>
+            <View style={{flexDirection: 'column', alignItems: 'flex-end', width: 35, paddingTop: 2}}>
+              <TouchableOpacity onPress={() => functionUpdateMode(2)}>
+                <Image source={CalendarBlack} style={{width: 25, height: 25, marginLeft: 4}}/>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={{flexDirection: 'row', height: 40, width: 80, paddingLeft: 5, margin: 5, justifyContent: 'space-around', alignItems: 'center'}}>
+            <Button style={{backgroundColor: '#F7A440', borderRadius: 15, height: 40, width: 45, justifyContent: 'center'}} onPress={() => searchData()}>
+              <Image source={search} style={{width: 25, height: 25, marginLeft: 2}}/>
+            </Button>
+          </View>
+          
+          {showDateModal()}
+          
+        </View>
+      )
+    }else{
+      return(
+        <View style={{flexDirection: 'row'}}>
+          <TouchableOpacity style={{borderWidth: 0.5, borderColor:'#FEA82F', height: 40, width: 150, paddingLeft: 5, margin: 5, justifyContent: 'center', backgroundColor: '#b8b8b8', borderRadius: 5}} onPress={() => alert("Silahkan pilih plant terlebih dahulu")}>
+            <Text>Pilih</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{borderWidth: 0.5, borderColor:'#FEA82F', height: 40, width: 150, paddingLeft: 5, margin: 5, justifyContent: 'center', backgroundColor: '#b8b8b8', borderRadius: 5}} onPress={() => alert("Silahkan pilih plant terlebih dahulu")}>
+            <Text>Pilih</Text>
+          </TouchableOpacity>
+          <View style={{flexDirection: 'row', height: 40, width: 80, paddingLeft: 5, margin: 5, justifyContent: 'space-around', alignItems: 'center'}}>
+            <Button style={{backgroundColor: '#F7A440', borderRadius: 15, height: 40, width: 45, justifyContent: 'center'}} onPress={() => alert("Silahkan pilih plant terlebih dahulu")}>
+              <Image source={search} style={{width: 25, height: 25, marginLeft: 2}}/>
+            </Button>
+          </View>
+        </View>
+      )
+    }
+  }
+
+  const onRefresh = () => {
+    setRefreshing(false)
+    searchData()
+  }
+
+  const content = () => {
+    const arrData = []
+    if(status != null){
+      if(data.length > 0){
+        data.map((val, key) => {
+          arrData.push(
+            <Button key={key} style={{marginTop: 10, alignItems: 'center', width: 350, borderRadius: 10, backgroundColor: '#F7A440', flexDirection: 'row'}} onPress={() => {
+              navigation.navigate('ListPartNumber', {
+                id: val.id,
+                sys_plant_id: val.sys_plant_id,
+                violator_id: val.violator_id,
+                violator_name: val.violator_name,
+                violation_time: val.violation_time,
+                violation_date: val.violation_date,
+                violation_status: val.violation_status,
+                violation_status_case: val.violation_status_case,
+                approve_1_by: val.approve_1_by,
+                approve_2_by: val.approve_2_by,
+                approve_3_by: val.approve_3_by,
+              })
+            }}>
+              <Text style={{color: 'black'}}>{val.violator_name}</Text>
+              <View style={{flexDirection: 'column', alignItems: 'flex-end'}}>
+                <Text style={{color: 'black'}}>{val.violation_time}</Text>
+                <Text style={{color: 'black'}}>{val.violation_date}</Text>
+              </View>
+            </Button>
+          )
+        })
+      }else{
+        Alert.alert(
+          "Info",
+          "Tidak ada data pada tanggal " + start_date + " hingga " + end_date,
+          [
+            { text: 'OK' }
+          ],
+          {cancelable: true}
+        )
+        setStatus(null)
+      }
+    }else{
+      console.log('status = null')
+    }
+    return arrData
+  }
+
   return (
     <Container>
       <View style={{height: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: '#d35400'}}>
         <View style={{borderBottomWidth: 1, height: "100%", justifyContent: 'center', borderColor: '#FEA82F', alignItems: 'center', flex: 1, flexDirection: 'column'}}>
-          <View style={{borderWidth: 0.5, borderColor: '#FEA82F',}}>
-            {/* <Text>wkkw</Text> */}
-            {/* <Picker 
-              mode="dropdown"
-              selectedValue={plant}
-              onValueChange={(value) => setPlant(value)}
-              itemStyle={{marginLeft: 0}}
-              itemTextStyle={{fontSize: 8}}
-            >
-            </Picker> */}
-            {/* <Picker
-              note
-              mode="dropdown"
-              style={{ width: 120 }}
-              selectedValue={plant}
-              onValueChange={(value) => setPlant(value)}
-            >
-              <Picker.Item label="Wallet" value="key0" />
-              <Picker.Item label="ATM Card" value="key1" />
-              <Picker.Item label="Debit Card" value="key2" />
-              <Picker.Item label="Credit Card" value="key3" />
-              <Picker.Item label="Net Banking" value="key4" />
-            </Picker> */}
-          </View>
+            <Text style={{color: 'white'}}>HR Violations Apps</Text>
         </View>
       </View>
       <View style={{flexDirection: 'row', flex: 1, backgroundColor: '#DDDDDD'}}>
-        <Text>AOWKoawk</Text>
+        <View style={{flexDirection: 'column'}}>
+          <View style={{flexDirection: 'row'}}>
+            <View style={{flexDirection: 'column', borderWidth: 0.5, borderColor:'#FEA82F', height: 40, flex: 1, margin: 5, justifyContent: 'center'}}>
+              <Picker
+                selectedValue={plant}
+                style={{ height: 40, width: 400, color: 'black' }}
+                itemStyle={{height: 20}}
+                onValueChange={(itemValue, itemIndex) => setPlant(itemValue)}
+              >
+                <Picker.Item label="Pilih" value="0" />
+                <Picker.Item label="TSSI" value="3" />
+                <Picker.Item label="Techno (KB)" value="2" />
+              </Picker>
+            </View>
+          </View>
+          {dateFunction()}
+          <View style={{flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+            <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+              {loading == false ? <View style={{backgroundColor: '#DDDDDD', alignItems: 'center', justifyContent: 'center', paddingTop: 100}}><ActivityIndicator size="large" color="#0000ff"/></View> : content() }
+            </ScrollView>
+          </View>
+        </View>
       </View>
       <View style={{height: 75, backgroundColor: '#d35400', borderTopWidth: 1, justifyContent: 'space-around', borderColor: '#FEA82F', alignItems: 'center', flexDirection: 'row', flexWrap: 'nowrap'}}>
         <TouchableOpacity style={{flexDirection: 'column', borderWidth: 0.5, borderColor: '#FEA82F', height: "75%", justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10}}>
