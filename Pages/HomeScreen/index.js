@@ -8,6 +8,7 @@ import { Picker } from '@react-native-picker/picker'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import CalendarBlack from '../Assets/calendar.png'
 import search from '../Assets/search.png'
+import check from '../Assets/check.png'
 import moment from 'moment'
 import { conditionalExpression } from '@babel/types'
 
@@ -188,11 +189,12 @@ const HomeScreen = ({navigation}) => {
         data.map((val, key) => {
           arrData.push(
             <Button key={key} style={{marginTop: 10, alignItems: 'center', width: 350, borderRadius: 10, backgroundColor: '#F7A440', flexDirection: 'row'}} onPress={() => {
-              navigation.navigate('ListPartNumber', {
+              navigation.navigate('ShowViolantion', {
                 id: val.id,
                 sys_plant_id: val.sys_plant_id,
                 violator_id: val.violator_id,
                 violator_name: val.violator_name,
+                violator_nik: val.violator_nik,
                 violation_time: val.violation_time,
                 violation_date: val.violation_date,
                 violation_status: val.violation_status,
@@ -200,20 +202,41 @@ const HomeScreen = ({navigation}) => {
                 approve_1_by: val.approve_1_by,
                 approve_2_by: val.approve_2_by,
                 approve_3_by: val.approve_3_by,
+                enforcer_id: val.enforcer_id,
+                enforcer_name: val.enforcer_name,
+                enforcer_nik: val.enforcer_nik,
+                whitness_id: val.whitness_id,
+                whitness_name: val.whitness_name,
+                whitness_nik: val.whitness_nik,
+                description: val.description,
+                penalty_first_name: val.penalty_first_name,
+                penalty_description: val.penalty_description,
+                penalty_second_name: val.penalty_second_name,
+                penalty_description_second: val.penalty_description_second,
               })
             }}>
-              <Text style={{color: 'black'}}>{val.violator_name}</Text>
-              <View style={{flexDirection: 'column', alignItems: 'flex-end'}}>
+              <View style={{flex: 1, flexDirection: 'column', alignItems: 'flex-start'}}>
+                <Text style={{color: 'black'}}>{val.violator_name}</Text>
+                <Text style={{color: 'black'}}>{val.violator_nik}</Text>
+              </View>
+              <View style={{flex: 1, flexDirection: 'column', alignItems: 'flex-end'}}>
                 <Text style={{color: 'black'}}>{val.violation_time}</Text>
                 <Text style={{color: 'black'}}>{val.violation_date}</Text>
               </View>
+              { 
+                val.approve_3_by != null ?
+                <View style={{width: 50, justifyContent: 'center', alignItems: 'center'}}>
+                  <Image source={check} style={{width: 35, height: 35}} />
+                </View> :
+                null
+              }
             </Button>
           )
         })
       }else{
         Alert.alert(
           "Info",
-          "Tidak ada data pada tanggal " + start_date + " hingga " + end_date,
+          "Tidak ada data pada tanggal tersebut",
           [
             { text: 'OK' }
           ],
@@ -222,7 +245,7 @@ const HomeScreen = ({navigation}) => {
         setStatus(null)
       }
     }else{
-      console.log('status = null')
+      // console.log('Tidak ada data')
     }
     return arrData
   }

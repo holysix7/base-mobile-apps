@@ -15,6 +15,7 @@ const BoardingScreen = ({navigation}) => {
 		setToken(isLogin)
 	}
 	const buttonFix = () => {
+	console.log(token)
 		if(token != null){
 			return (
 				<Button rounded info style={{marginTop: 10}} onPress={() => navigation.replace('HomeScreen')}>
