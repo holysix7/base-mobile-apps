@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		flexDirection: 'column',
-		backgroundColor: "#54c3f0",
+		backgroundColor: "#DDDDDD",
 		textAlign: "center"
 	}
 });

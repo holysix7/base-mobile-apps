@@ -5,7 +5,9 @@ import {
   BoardingScreen,
   Login,
   HomeScreen,
-	ShowViolantion
+	ShowViolation,
+	AddViolation,
+	Profile
 } from '../Pages'
 
 const Stack = createStackNavigator();
@@ -23,7 +25,9 @@ const Routes = () => {
 			<Stack.Screen name="BoardingScreen" component={BoardingScreen} />
 			<Stack.Screen name="Login" component={Login} />
 			<Stack.Screen name="HomeScreen" component={HomeScreen} />
-			<Stack.Screen name="ShowViolantion" component={ShowViolantion} />
+			<Stack.Screen name="ShowViolation" component={ShowViolation} />
+			<Stack.Screen name="AddViolation" component={AddViolation} />
+			<Stack.Screen name="Profile" component={Profile} />
 
     </Stack.Navigator>  
   )

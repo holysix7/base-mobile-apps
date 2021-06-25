@@ -10,31 +10,55 @@ import CalendarBlack from '../Assets/calendar.png'
 import search from '../Assets/search.png'
 import check from '../Assets/check.png'
 import moment from 'moment'
-import { conditionalExpression } from '@babel/types'
+import HeaderContent from '../Header/index'
 
 const HomeScreen = ({navigation}) => {
   useEffect(() => {
     cekLogin()
   }, [])
-	var timeNow 	                    = moment()
+  /**
+   * Auth
+   */
+  const [token, setToken]           = useState(null)
+  const [name, setName]             = useState(null)
+  const [user, setUser]             = useState(null)
+  const [pms_access, setPms]        = useState(null)
+	
+  
+  var timeNow 	                    = moment()
   const [refreshing, setRefreshing] = useState(false);
   const [plant, setPlant]           = useState(0)
   const [data, setData]             = useState([])
 	const [loading, setLoading]       = useState(true);
-  const [token, setToken]           = useState(null)
 	const [mode, setMode]		          = useState(null)
+  const [status, setStatus]         = useState(null)
 	const [show, setShow]		          = useState(false)
   const [start_date, setStart]      = useState(new Date(timeNow))
   const [end_date, setEnd]          = useState(new Date(timeNow))
-  const [status, setStatus]         = useState(null)
 	var startDateText 	              = moment(start_date).format("YYYY-MM-DD") 
 	var endDateText 	                = moment(end_date).format("YYYY-MM-DD")
 
 	const cekLogin = async() => {
-    const isLogin = await AsyncStorage.getItem('token')
+    const isLogin = await AsyncStorage.getItem('key')
+    const user = await AsyncStorage.getItem('user')
+    const name = await AsyncStorage.getItem('name')
+    const pms_access = await AsyncStorage.getItem('pms_access')
 		setToken(isLogin)
+    setName(name)
+    setUser(user)
+    setPms(pms_access)
 	}
 
+  
+  const logout = async() => {
+    AsyncStorage.getAllKeys()
+    .then(keys => AsyncStorage.multiRemove(keys))
+    .then(() => {
+      navigation.replace('Login')
+      alert("Successfully Logout!")
+    })
+  }
+  
   const searchData = async() => {
     setLoading(false)
     const headers = {
@@ -56,10 +80,10 @@ const HomeScreen = ({navigation}) => {
 		.catch(error => {
       console.log(error)
       Alert.alert(
-        "Error",
-        "Hubungi IT Department",
+        "Info",
+        "Silahkan Login Kembali",
         [
-          { text: "OK", onPress: () => console.log('Stop API') }
+          { text: "OK", onPress: () => logout() }
         ],
         { cancelable: false }
       );
@@ -187,9 +211,17 @@ const HomeScreen = ({navigation}) => {
     if(status != null){
       if(data.length > 0){
         data.map((val, key) => {
+          // const childData = []
+          // val.image.map((el) => {
+          //   const object = {
+          //     id: el.id,
+          //     base64_full: el.base64_full
+          //   }
+          //   childData.push(object)
+          // })
           arrData.push(
             <Button key={key} style={{marginTop: 10, alignItems: 'center', width: 350, borderRadius: 10, backgroundColor: '#F7A440', flexDirection: 'row'}} onPress={() => {
-              navigation.navigate('ShowViolantion', {
+              navigation.navigate('ShowViolation', {
                 id: val.id,
                 sys_plant_id: val.sys_plant_id,
                 violator_id: val.violator_id,
@@ -213,6 +245,9 @@ const HomeScreen = ({navigation}) => {
                 penalty_description: val.penalty_description,
                 penalty_second_name: val.penalty_second_name,
                 penalty_description_second: val.penalty_description_second,
+                // childData: childData,
+                start_date: moment(start_date).format("YYYY-MM-DD"),
+                end_date: moment(end_date).format("YYYY-MM-DD")
               })
             }}>
               <View style={{flex: 1, flexDirection: 'column', alignItems: 'flex-start'}}>
@@ -252,10 +287,8 @@ const HomeScreen = ({navigation}) => {
 
   return (
     <Container>
-      <View style={{height: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: '#d35400'}}>
-        <View style={{borderBottomWidth: 1, height: "100%", justifyContent: 'center', borderColor: '#FEA82F', alignItems: 'center', flex: 1, flexDirection: 'column'}}>
-            <Text style={{color: 'white'}}>HR Violations Apps</Text>
-        </View>
+      <View>
+        <HeaderContent />
       </View>
       <View style={{flexDirection: 'row', flex: 1, backgroundColor: '#DDDDDD'}}>
         <View style={{flexDirection: 'column'}}>
@@ -283,13 +316,20 @@ const HomeScreen = ({navigation}) => {
       </View>
       <View style={{height: 75, backgroundColor: '#d35400', borderTopWidth: 1, justifyContent: 'space-around', borderColor: '#FEA82F', alignItems: 'center', flexDirection: 'row', flexWrap: 'nowrap'}}>
         <TouchableOpacity style={{flexDirection: 'column', borderWidth: 0.5, borderColor: '#FEA82F', height: "75%", justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10}}>
-          <Text style={{color: 'white'}}>Navigation 1</Text>
+          <Text style={{color: 'white'}}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={{flexDirection: 'column', borderWidth: 0.5, borderColor: '#FEA82F', height: "75%", justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10}}>
-          <Text style={{color: 'white'}}>Navigation 2</Text>
+        <TouchableOpacity style={{flexDirection: 'column', borderWidth: 0.5, borderColor: '#FEA82F', height: "75%", justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10}} onPress={() => navigation.navigate('AddViolation', {
+          sys_plant_id: plant
+        })} >
+          <Text style={{color: 'white'}}>Add Violation</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={{flexDirection: 'column', borderWidth: 0.5, borderColor: '#FEA82F', height: "75%", justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10}}>
-          <Text style={{color: 'white'}}>Navigation 3</Text>
+        <TouchableOpacity style={{flexDirection: 'column', borderWidth: 0.5, borderColor: '#FEA82F', height: "75%", justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10}} onPress={() => navigation.navigate('Profile', {
+          sys_plant_id: plant,
+          staff_name: name,
+          staff_nik: user,
+          staff_pms_access: pms_access
+        })}>
+          <Text style={{color: 'white'}}>Profile</Text>
         </TouchableOpacity>
       </View>
     </Container>

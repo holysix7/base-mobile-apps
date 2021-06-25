@@ -7,23 +7,21 @@ import approved from '../Assets/approved_orange.png'
 import approved_biru from '../Assets/approved.png'
 import moment from 'moment'
 
-const ShowViolantion = ({route, navigation}) => {
-  const {id, sys_plant_id, violator_id, violator_name, violator_nik, violation_time, violation_date, violation_status, violation_status_case, approve_1_by, approve_2_by, approve_3_by, enforcer_id, enforcer_name, enforcer_nik, whitness_id, whitness_name, whitness_nik, description, penalty_first_name, penalty_description, penalty_second_name, penalty_description_second} = route.params
+const ShowViolation = ({route, navigation}) => {
+  const {id, sys_plant_id, violator_id, violator_name, violator_nik, violation_time, violation_date, violation_status, violation_status_case, approve_1_by, approve_2_by, approve_3_by, enforcer_id, enforcer_name, enforcer_nik, whitness_id, whitness_name, whitness_nik, description, penalty_first_name, penalty_description, penalty_second_name, penalty_description_second, start_date, end_date} = route.params
   useEffect(() => {
-    getToken()
+    showViolation()
   }, [])
 	var timeNow 	                    = moment()
   const [refreshing, setRefreshing] = useState(false)
 	const [loading, setLoading]       = useState(true)
   const [token, setToken]           = useState(null)
+  const [data, setData]             = useState(null)
   const [penalties, setPenalties]   = useState([])
 
-	const getToken = async() => {
-    const isLogin = await AsyncStorage.getItem('token')
-		setToken(isLogin)
-	}
-  
+  console.log(data)
   const submit = (value) => {
+    console.log
     const approve = parseInt(value)
     const data = {
       id: id,
@@ -75,6 +73,50 @@ const ShowViolantion = ({route, navigation}) => {
     }else{
       null
     }
+  }
+
+  const imageContent = () => {
+    const arrData = []
+    if(data != null){
+      if(data.image.length > 0){
+        data.image.map((val, i) => {
+          if(val.base64_full != null){
+            arrData.push(
+              <View key={i} style={{alignItems: 'center', justifyContent: 'center', height: 300, flex: 1, borderWidth: 0.5, marginTop: 25}}>
+                <Image source={{uri: val.base64_full}} style={{width: 270, height: 270, resizeMode: 'contain'}} />
+              </View>
+            )
+          }
+        })
+      }
+    }
+    return arrData
+  }
+
+  const showViolation = async() => {
+    setLoading(false)
+    const isLogin = await AsyncStorage.getItem('key')
+		setToken(isLogin)
+    const headers = {
+      'Authorization': `${isLogin}`, 
+      'Content-Type': 'application/x-www-form-urlencoded', 
+      'Cookie': '__profilin=p%3Dt'
+    }
+    const params = {
+      'id': id,
+      'sys_plant_id': sys_plant_id,
+      'start_date': start_date,
+      'end_date': end_date
+    }
+		Axios.get('http://192.168.131.119:8080/v1/hrd_violation/show', {params: params, headers: headers})
+		.then(response => {
+			setData(response.data.data)
+			setLoading(true)
+		})
+		.catch(error => {
+      console.log(error)
+			setLoading(true)
+		})
   }
 
   const content = () => {
@@ -191,6 +233,17 @@ const ShowViolantion = ({route, navigation}) => {
           </View>
         </View>
         <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
+          <View style={{width: '40%', height: 50, justifyContent: 'center'}}>
+            <Text>Deskripsi Pelanggaran 1</Text>
+          </View>
+          <View style={{paddingLeft: 15, height: 50, justifyContent: 'center'}}>
+            <Text>:</Text>
+          </View>
+          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 50, justifyContent: 'center'}}>
+            <Text>{penalty_description}</Text>
+          </View>
+        </View>
+        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
           <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
             <Text>Jenis Pelanggaran 2</Text>
           </View>
@@ -201,6 +254,18 @@ const ShowViolantion = ({route, navigation}) => {
             <Text>{penalty_second_name}</Text>
           </View>
         </View>
+        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
+          <View style={{width: '40%', height: 50, justifyContent: 'center'}}>
+            <Text>Deskripsi Pelanggaran 2</Text>
+          </View>
+          <View style={{paddingLeft: 15, height: 50, justifyContent: 'center'}}>
+            <Text>:</Text>
+          </View>
+          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 50, justifyContent: 'center'}}>
+            <Text>{penalty_description_second}</Text>
+          </View>
+        </View>
+        {imageContent()}
         <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'center'}}>
           {functionButton()}
         </View>
@@ -212,7 +277,7 @@ const ShowViolantion = ({route, navigation}) => {
     <Container>
       <View style={{height: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: '#d35400'}}>
         <View style={{borderBottomWidth: 1, height: "100%", justifyContent: 'center', borderColor: '#FEA82F', alignItems: 'center', flex: 1, flexDirection: 'column'}}>
-            <Text style={{color: 'white'}}>Violation Form</Text>
+            <Text style={{color: 'white'}}>Approve Violation Form</Text>
         </View>
       </View>
       <View style={{flexDirection: 'row', flex: 1, backgroundColor: '#DDDDDD'}}>
@@ -254,4 +319,4 @@ const ShowViolantion = ({route, navigation}) => {
   ) 
 }
 
-export default ShowViolantion
+export default ShowViolation

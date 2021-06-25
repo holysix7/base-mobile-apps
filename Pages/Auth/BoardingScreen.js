@@ -11,11 +11,12 @@ const BoardingScreen = ({navigation}) => {
 	}, [])
 	
 	const cekLogin = async() => {
-		const isLogin = await AsyncStorage.getItem('token')
+    const isLogin = await AsyncStorage.getItem('key')
 		setToken(isLogin)
 	}
+	
 	const buttonFix = () => {
-	console.log(token)
+		// console.log(token)
 		if(token != null){
 			return (
 				<Button rounded info style={{marginTop: 10}} onPress={() => navigation.replace('HomeScreen')}>
@@ -36,7 +37,7 @@ const BoardingScreen = ({navigation}) => {
 	}
 
 	return (
-		<Container style={{alignItems: 'center', justifyContent: 'center', backgroundColor: '#54c3f0'}}>
+		<Container style={{alignItems: 'center', justifyContent: 'center', backgroundColor: '#DDDDDD'}}>
 				<View style={{justifyContent: 'center', alignItems: 'center'}}>
 					<Image source={LogoSIP} style={{width: 188, height: 150}}/>
 				</View>

@@ -3,10 +3,10 @@ import {View, Image, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, A
 import LogoSIP from '../Assets/logo-sip3.png';
 import {Container, Button, Text, Form, Item, Label, Input} from "native-base";
 import styles from "../Styles/Styling";
-import AsyncStorage from "@react-native-community/async-storage";
 import Axios from 'axios';
 import messaging from '@react-native-firebase/messaging';
 import DeviceStorage from '../System/DeviceStorage';
+import Session from '../System/Session';
 
 const Login = ({navigation}) => {
 	const [user, setUser] = useState("");
@@ -50,7 +50,7 @@ const Login = ({navigation}) => {
       if(res.data.data != null){
         setLoading(true)
         DeviceStorage(res.data.token)
-        console.log("response: ", res.data.data)
+				Session(res.data.data)
         Alert.alert(
           "Info",
           "Login Berhasil",

@@ -5,12 +5,16 @@ import SplashScreen from './Auth/SplashScreen';
 import BoardingScreen from './Auth/BoardingScreen';
 import Login from './Auth/Login';
 import HomeScreen from './HomeScreen';
-import ShowViolantion from './Content/ShowViolantion';
+import ShowViolation from './Content/ShowViolation';
+import AddViolation from './Content/AddViolation';
+import Profile from './Profile';
 
 export {
   SplashScreen,
   BoardingScreen,
   Login,
   HomeScreen,
-  ShowViolantion
+  ShowViolation,
+  AddViolation,
+  Profile
 }
