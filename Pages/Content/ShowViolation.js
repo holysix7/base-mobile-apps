@@ -1,9 +1,11 @@
-import {View, ScrollView, ActivityIndicator, Image, Alert, RefreshControl} from 'react-native'
+import {View, ScrollView, ActivityIndicator, Image, RefreshControl, Alert} from 'react-native'
 import React, {useState, useEffect, useCallback } from 'react'
 import { Container, Text, Button} from 'native-base'
 import Axios from 'axios'
 import AsyncStorage from "@react-native-community/async-storage"
 import approved from '../Assets/approved_orange.png'
+import Xsatu from '../Assets/Xsatu.png'
+import Xdua from '../Assets/Xdua.png'
 import approved_biru from '../Assets/approved.png'
 import moment from 'moment'
 
@@ -19,14 +21,25 @@ const ShowViolation = ({route, navigation}) => {
   const [data, setData]             = useState(null)
   const [penalties, setPenalties]   = useState([])
 
-  console.log(data)
-  const submit = (value) => {
-    console.log
+  const submit = (value, type) => {
+    // console.log('ini type: ', type)
+    // console.log('ini value: ', value)
     const approve = parseInt(value)
-    const data = {
-      id: id,
-      user_id: violator_id,
-      approve: approve
+    if(type == 'Approve'){
+      var data = {
+        id: id,
+        user_id: violator_id,
+        approve: approve,
+        type: type
+      }
+    }else{
+      var data = {
+        id: id,
+        user_id: violator_id,
+        cancel: approve,
+        approve: approve,
+        type: type
+      }
     }
     console.log(data)
 		var config = {
@@ -43,36 +56,20 @@ const ShowViolation = ({route, navigation}) => {
     .then(function(response){
       console.log("Success Approve ", response)
       setLoading(true)
-      navigation.navigate('HomeScreen')
-      alert("Success Approve ", value, "!")
+      Alert.alert(
+        "Info",
+        "Success Update Data",
+        [
+          { text: "OK", onPress: () => showViolation() }
+        ],
+        { cancelable: false }
+      );
     })
     .catch(function(error){
+      setLoading(true)
+      alert("Error Hubungi IT!")
       console.log(error)
     })
-  }
-
-  const functionButton = () => {
-    if(approve_1_by == null && approve_2_by == null && approve_3_by == null){
-      return (
-        <Button style={{backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('1')}>
-          <Text>Approve 1</Text>
-        </Button>
-      )
-    }else if(approve_1_by != null && approve_2_by == null && approve_3_by == null){
-      return (
-        <Button style={{backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('2')}>
-          <Text>Approve 2</Text>
-        </Button>
-      )
-    }else if(approve_1_by != null && approve_2_by != null && approve_3_by == null){
-      return (
-        <Button style={{backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('3')}>
-          <Text>Approve 3</Text>
-        </Button>
-      )
-    }else{
-      null
-    }
   }
 
   const imageContent = () => {
@@ -119,156 +116,169 @@ const ShowViolation = ({route, navigation}) => {
 		})
   }
 
+  const onRefresh = () => {
+    setRefreshing(false)
+    showViolation()
+  }
+
+  const functionButton = () => {
+    if(data != null){
+      if(data.approve_1_by == null && data.approve_2_by == null && data.approve_3_by == null){
+        return (
+        <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'space-around'}}>
+          <Button style={{paddingHorizontal: 3, backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('1', 'Approve')}>
+            <Text>Approve 1</Text>
+            <Image source={approved_biru} style={{width: 35, height: 35}} /> 
+          </Button>
+        </View>
+        )
+      }else if(data.approve_1_by != null && data.approve_2_by == null && data.approve_3_by == null){
+        return (
+        <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'space-around'}}>
+          <Button style={{paddingHorizontal: 3, backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('1', 'Cancel')}>
+            <Text>Cancel 1</Text>
+            <Image source={Xdua} style={{width: 30, height: 30}} />
+          </Button>
+          <Button style={{paddingHorizontal: 3, backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('2', 'Approve')}>
+            <Text>Approve 2</Text>
+            <Image source={approved_biru} style={{width: 35, height: 35}} /> 
+          </Button>
+        </View>
+        )
+      }else if(data.approve_1_by != null && data.approve_2_by != null && data.approve_3_by == null){
+        return (
+        <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'space-around'}}>
+          <Button style={{paddingHorizontal: 3, backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('2', 'Cancel')}>
+            <Text>Cancel 2</Text>
+            <Image source={Xdua} style={{width: 30, height: 30}} />
+          </Button>
+          <Button style={{paddingHorizontal: 3, backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('3', 'Approve')}>
+            <Text>Approve 3</Text>
+            <Image source={approved_biru} style={{width: 35, height: 35}} /> 
+          </Button>
+        </View>
+        )
+      }else{
+        return (
+          <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'space-around'}}>
+            <Button style={{paddingHorizontal: 3, backgroundColor: '#d35400', borderRadius: 10}} onPress={() => submit('3', 'Cancel')}>
+              <Text>Cancel 3</Text>
+              <Image source={Xdua} style={{width: 35, height: 35}} /> 
+            </Button>
+          </View>
+        )
+      }
+    }
+  }
+
   const content = () => {
     return (
-      <ScrollView>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>Pelanggar</Text>
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        
+        <View style={{borderBottomWidth: 0.5}}>
+          <View style={{height: 40, justifyContent: 'center', paddingLeft: 10}}>
+            <Text>Pelapor :</Text>
           </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
+          <View style={{paddingHorizontal: 10, paddingTop: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Text>{data != null ? data.enforcer_name != null ? data.enforcer_name : '-' : '-'}</Text>
+            </View>
           </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{violator_name}</Text>
+          <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Text>{data != null ? data.enforcer_nik != null ? data.enforcer_nik : '-' : '-'}</Text>
+            </View>
           </View>
-        </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>NIK Pelanggar</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{violator_nik}</Text>
-          </View>
-        </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>Saksi</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{whitness_name}</Text>
+          <View style={{flexDirection: 'row', marginBottom: 5, justifyContent: 'flex-end'}}>
+            <View style={{flexDirection: 'row', width: '70%', justifyContent: 'flex-end'}}>
+              <View style={{paddingRight: 5, borderWidth: 0.5, borderRadius: 5, width: '68%', height: 40, alignItems: 'flex-end', justifyContent: 'center', backgroundColor: '#b8b8b8'}}>
+                <Text>{data != null ? data.violation_date != null ? data.violation_date : '-' : '-'}</Text>
+              </View>
+              <View style={{marginLeft: 5, paddingRight: 5, borderWidth: 0.5, borderRadius: 5, width: "25%", marginRight: 10, height: 40, alignItems: 'flex-end', justifyContent: 'center', backgroundColor: '#b8b8b8'}}>
+                <Text>{data != null ? data.violation_time != null ? data.violation_time : '-' : '-'}</Text>
+              </View>
+            </View>
           </View>
         </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>NIK Saksi</Text>
+
+        <View style={{borderBottomWidth: 0.5}}>
+          <View style={{height: 40, justifyContent: 'center', paddingLeft: 10}}>
+            <Text>Saksi :</Text>
           </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
+          <View style={{paddingHorizontal: 10, paddingTop: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Text>{data != null ? data.whitness_name != null ? data.whitness_name : '-' : '-'}</Text>
+            </View>
           </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{whitness_nik}</Text>
-          </View>
-        </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>Pemberi Hukuman</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{enforcer_name}</Text>
+          <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Text>{data != null ? data.whitness_nik != null ? data.whitness_nik : '-' : '-'}</Text>
+            </View>
           </View>
         </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>NIK Pemberi Hukuman</Text>
+
+        <View style={{borderBottomWidth: 0.5}}>
+          <View style={{height: 40, justifyContent: 'center', paddingLeft: 10}}>
+            <Text>Pelanggar :</Text>
           </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
+          <View style={{paddingHorizontal: 10, paddingTop: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Text>{data != null ? data.violator_name != null ? data.violator_name : '-' : '-'}</Text>
+            </View>
           </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{enforcer_nik}</Text>
+          <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Text>{data != null ? data.violator_nik != null ? data.violator_nik : '-' : '-'}</Text>
+            </View>
+          </View>
+          <View style={{height: 40, justifyContent: 'center', paddingLeft: 10}}>
+            <Text>Deskripsi :</Text>
+          </View>
+      
+          <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, borderWidth: 0.5, borderRadius: 5, width: '70%', height: 80, justifyContent: 'center', backgroundColor: '#b8b8b8'}}>
+              <Text>{data != null ? data.description != null ? data.description : '-' : '-'}</Text>
+            </View>
+          </View>
+
+        </View>
+                
+        <View style={{borderBottomWidth: 0.5}}>
+          <View style={{height: 40, justifyContent: 'center', paddingLeft: 10}}>
+            <Text>Hukuman 1 :</Text>
+          </View>
+      
+          <View style={{paddingHorizontal: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Text>{data != null ? data.penalty_first_name ? data.penalty_first_name : '-' : '-'}</Text>
+            </View>
+          </View>
+          <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 80, justifyContent: 'center'}}>
+              <Text>{data != null ? data.penalty_description ? data.penalty_description : '-' : '-'}</Text>
+            </View>
           </View>
         </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>Tanggal Pelanggaran</Text>
+                
+        <View style={{borderBottomWidth: 0.5}}>
+          <View style={{height: 40, justifyContent: 'center', paddingLeft: 10}}>
+            <Text>Hukuman 2 :</Text>
           </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
+      
+          <View style={{paddingHorizontal: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Text>{data != null ? data.penalty_second_name ? data.penalty_second_name : '-' : '-'}</Text>
+            </View>
           </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{violation_date}</Text>
-          </View>
-        </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>Waktu Pelanggaran</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{violation_time}</Text>
+          <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '70%', height: 80, justifyContent: 'center'}}>
+              <Text>{data != null ? data.penalty_description_second ? data.penalty_description_second : '-' : '-'}</Text>
+            </View>
           </View>
         </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 60, justifyContent: 'center'}}>
-            <Text>Deskripsi</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 60, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 60, justifyContent: 'center'}}>
-            <Text>{description}</Text>
-          </View>
-        </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>Jenis Pelanggaran 1</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{penalty_first_name}</Text>
-          </View>
-        </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 50, justifyContent: 'center'}}>
-            <Text>Deskripsi Pelanggaran 1</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 50, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 50, justifyContent: 'center'}}>
-            <Text>{penalty_description}</Text>
-          </View>
-        </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 40, justifyContent: 'center'}}>
-            <Text>Jenis Pelanggaran 2</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 40, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 40, justifyContent: 'center'}}>
-            <Text>{penalty_second_name}</Text>
-          </View>
-        </View>
-        <View style={{padding: 10, flexDirection: 'row', flex: 1}}>
-          <View style={{width: '40%', height: 50, justifyContent: 'center'}}>
-            <Text>Deskripsi Pelanggaran 2</Text>
-          </View>
-          <View style={{paddingLeft: 15, height: 50, justifyContent: 'center'}}>
-            <Text>:</Text>
-          </View>
-          <View style={{marginLeft: 15, paddingLeft: 5, backgroundColor: '#b8b8b8', borderWidth: 0.5, borderRadius: 5, width: '50%', height: 50, justifyContent: 'center'}}>
-            <Text>{penalty_description_second}</Text>
-          </View>
-        </View>
+        
         {imageContent()}
-        <View style={{padding: 10, flexDirection: 'row', flex: 1, justifyContent: 'center'}}>
-          {functionButton()}
-        </View>
+        {/* {functionButton()} */}
       </ScrollView>
     )
   }
@@ -280,40 +290,42 @@ const ShowViolation = ({route, navigation}) => {
             <Text style={{color: 'white'}}>Approve Violation Form</Text>
         </View>
       </View>
-      <View style={{flexDirection: 'row', flex: 1, backgroundColor: '#DDDDDD'}}>
+      <View style={{flexDirection: 'row', flex: 1, backgroundColor: '#DDDDDD', justifyContent: 'center', alignItems: 'center'}}>
         {loading == false ? <View style={{backgroundColor: '#DDDDDD', alignItems: 'center', justifyContent: 'center', paddingTop: 100}}><ActivityIndicator size="large" color="#0000ff"/></View> : content() }
       </View>
-      <View style={{height: 80, flexDirection: 'row', alignItems: 'center', backgroundColor: '#DDDDDD', justifyContent: 'space-around'}}>
+      <View style={{flexDirection: 'column', height: 90, alignItems: 'center', backgroundColor: '#DDDDDD'}}>
+        <View style={{flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start'}}>
           {
-            approve_1_by != null ? 
+            data != null ?
+            data.approve_1_by != null ? 
             <View style={{justifyContent: 'center', alignItems: 'center'}}>
-              <Image source={approved_biru} style={{width: 50, height: 50}} /> 
-              <Text>Approve 1</Text>
+              <Image source={approved_biru} style={{width: 30, height: 30}} /> 
             </View> : 
-            <View style={{justifyContent: 'center', alignItems: 'center', backgroundColor: '#DDDDDD'}}>
-              <Text>Approve 1</Text>
-            </View>
+            null :
+            null
           } 
           {
-            approve_2_by != null ? 
+            data != null ?
+            data.approve_2_by != null ? 
             <View style={{justifyContent: 'center', alignItems: 'center'}}>
-              <Image source={approved_biru} style={{width: 50, height: 50}} /> 
-              <Text>Approve 2</Text>
+              <Image source={approved_biru} style={{width: 30, height: 30}} /> 
             </View> : 
-            <View style={{justifyContent: 'center', alignItems: 'center', backgroundColor: '#DDDDDD'}}>
-              <Text>Approve 2</Text>
-            </View>
+            null : 
+            null
           } 
           {
-            approve_3_by != null ? 
+            data != null ?
+            data.approve_3_by != null ? 
             <View style={{justifyContent: 'center', alignItems: 'center'}}>
-              <Image source={approved_biru} style={{width: 50, height: 50}} /> 
-              <Text>Approve 3</Text>
+              <Image source={approved_biru} style={{width: 30, height: 30}} /> 
             </View> : 
-            <View style={{justifyContent: 'center', alignItems: 'center', backgroundColor: '#DDDDDD'}}>
-              <Text>Approve 3</Text>
-            </View>
+            null :
+            null
           } 
+        </View>
+        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+          {functionButton()}
+        </View>
       </View>
     </Container>
   ) 

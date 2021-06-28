@@ -20,6 +20,7 @@ const HomeScreen = ({navigation}) => {
    * Auth
    */
   const [token, setToken]           = useState(null)
+  const [id, setId]                 = useState(null)
   const [name, setName]             = useState(null)
   const [user, setUser]             = useState(null)
   const [pms_access, setPms]        = useState(null)
@@ -42,10 +43,12 @@ const HomeScreen = ({navigation}) => {
     const isLogin = await AsyncStorage.getItem('key')
     const user = await AsyncStorage.getItem('user')
     const name = await AsyncStorage.getItem('name')
+    const id = await AsyncStorage.getItem('id')
     const pms_access = await AsyncStorage.getItem('pms_access')
 		setToken(isLogin)
     setName(name)
     setUser(user)
+    setId(id)
     setPms(pms_access)
 	}
 
@@ -319,7 +322,10 @@ const HomeScreen = ({navigation}) => {
           <Text style={{color: 'white'}}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity style={{flexDirection: 'column', borderWidth: 0.5, borderColor: '#FEA82F', height: "75%", justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10}} onPress={() => navigation.navigate('AddViolation', {
-          sys_plant_id: plant
+          sys_plant_id: plant,
+          id: id,
+          name: name,
+          nik: user
         })} >
           <Text style={{color: 'white'}}>Add Violation</Text>
         </TouchableOpacity>
