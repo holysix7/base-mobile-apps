@@ -3,14 +3,14 @@ import React, {useState, useEffect, useCallback } from 'react'
 import { Container, Text, Button} from 'native-base'
 import Axios from 'axios'
 import AsyncStorage from "@react-native-community/async-storage"
-import approved from '../Assets/approved_orange.png'
-import Xsatu from '../Assets/Xsatu.png'
 import Xdua from '../Assets/Xdua.png'
 import approved_biru from '../Assets/approved.png'
 import moment from 'moment'
+import base_url from '../System/base_url'
+import app_version from '../System/app_version'
 
 const ShowViolation = ({route, navigation}) => {
-  const {id, sys_plant_id, violator_id, violator_name, violator_nik, violation_time, violation_date, violation_status, violation_status_case, approve_1_by, approve_2_by, approve_3_by, enforcer_id, enforcer_name, enforcer_nik, whitness_id, whitness_name, whitness_nik, description, penalty_first_name, penalty_description, penalty_second_name, penalty_description_second, start_date, end_date} = route.params
+  const {user_id, id, sys_plant_id, violator_id, violator_name, violator_nik, violation_time, violation_date, violation_status, violation_status_case, approve_1_by, approve_2_by, approve_3_by, enforcer_id, enforcer_name, enforcer_nik, whitness_id, whitness_name, whitness_nik, description, penalty_first_name, penalty_description, penalty_second_name, penalty_description_second, start_date, end_date} = route.params
   useEffect(() => {
     showViolation()
   }, [])
@@ -19,32 +19,33 @@ const ShowViolation = ({route, navigation}) => {
 	const [loading, setLoading]       = useState(true)
   const [token, setToken]           = useState(null)
   const [data, setData]             = useState(null)
-  const [penalties, setPenalties]   = useState([])
 
   const submit = (value, type) => {
-    // console.log('ini type: ', type)
-    // console.log('ini value: ', value)
+    console.log('ini val: ', value)
+    console.log('ini type: ', type)
     const approve = parseInt(value)
     if(type == 'Approve'){
       var data = {
         id: id,
-        user_id: violator_id,
+        sys_plant_id: sys_plant_id,
+        user_id: user_id,
         approve: approve,
-        type: type
+        type: type,
+        tbl: 'violation',
       }
     }else{
       var data = {
         id: id,
-        user_id: violator_id,
+        sys_plant_id: sys_plant_id,
+        user_id: user_id,
         cancel: approve,
-        approve: approve,
-        type: type
+        type: type,
+        tbl: 'violation',
       }
     }
-    console.log(data)
 		var config = {
 			method: 'put',
-      url: 'http://192.168.131.119:8080/v1/hrd_violations',
+      url: `${base_url}/api/v2/violation/approve`,
 			headers: { 
 				'Authorization': `${token}`, 
 				'Content-Type': 'application/json', 
@@ -54,16 +55,27 @@ const ShowViolation = ({route, navigation}) => {
 		}
     Axios(config)
     .then(function(response){
-      console.log("Success Approve ", response)
+      console.log("Success Approve ", response.data.code)
       setLoading(true)
-      Alert.alert(
-        "Info",
-        "Success Update Data",
-        [
-          { text: "OK", onPress: () => showViolation() }
-        ],
-        { cancelable: false }
-      );
+      if(response.data.code == 403){
+        Alert.alert(
+          "Info",
+          "Gagal Approve karena tidak memiliki hak akses",
+          [
+            { text: "OK", onPress: () => console.log('Gada Akses') }
+          ],
+          { cancelable: false }
+        );
+      }else{
+        Alert.alert(
+          "Info",
+          "Success Update Data",
+          [
+            { text: "OK", onPress: () => showViolation() }
+          ],
+          { cancelable: false }
+        );
+      }
     })
     .catch(function(error){
       setLoading(true)
@@ -102,10 +114,11 @@ const ShowViolation = ({route, navigation}) => {
     const params = {
       'id': id,
       'sys_plant_id': sys_plant_id,
-      'start_date': start_date,
-      'end_date': end_date
+      'tbl': 'violation',
+      'app_version': app_version,
+      'user_id': user_id
     }
-		Axios.get('http://192.168.131.119:8080/v1/hrd_violation/show', {params: params, headers: headers})
+		Axios.get(`${base_url}/api/v2/violation/show`, {params: params, headers: headers})
 		.then(response => {
 			setData(response.data.data)
 			setLoading(true)

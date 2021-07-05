@@ -1,31 +1,27 @@
 import {View, ScrollView, ActivityIndicator, TextInput, Image, Alert, RefreshControl} from 'react-native'
-import React, {useState, useEffect, useCallback } from 'react'
+import React, {useState, useEffect } from 'react'
 import { Container, Text, Button} from 'native-base'
 import Axios from 'axios'
 import AsyncStorage from "@react-native-community/async-storage"
 import { Picker } from '@react-native-picker/picker'
-import approved from '../Assets/approved_orange.png'
-import approved_biru from '../Assets/approved.png'
 import cameraIcons from '../Assets/cameraicon.png'
 import moment from 'moment'
 import Autocomplete from 'react-native-autocomplete-input'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { white } from 'chalk'
 import {launchCamera} from 'react-native-image-picker';
+import base_url from '../System/base_url'
+import app_version from '../System/app_version'
 
 const AddViolation = ({route, navigation}) => {
   const {sys_plant_id, id, name, nik} = route.params
   useEffect(() => {
     getSysAccount()
-    getPenalties()
   }, [])
 	var timeNow 	                    = moment()
-  const [refreshing, setRefreshing] = useState(false)
-  const [tokenDua, setToken]        = useState(null)
+  const [data, setData]             = useState(null)
+  const [code, setCode]             = useState(null)
+  const [token, setToken]           = useState(null)
 	const [loading, setLoading]       = useState(false)
-  const [users, setUsers]           = useState([])
-  const [penalties, setPenalties]   = useState([])
-  const [find, setFind]             = useState({})
 	const [show, setShow]		          = useState(false)
 	const [showTime, setShowTime]		  = useState(false)
 	const [item_image, setItemImage]	= useState([])
@@ -34,6 +30,12 @@ const AddViolation = ({route, navigation}) => {
    * Parameter
    */
   const time = moment(timeNow).format("HH:mm")
+  
+  const [karyawan, getKaryawan]                                   = useState(null)
+  const [karyawanDua, getKaryawanDua]                             = useState(null)
+  const [violatorDeptId, setViolatorDeptId]                       = useState(null)
+  const [enforcerDeptId, setEnforcerDeptId]                       = useState(null)
+  const [whitnessDeptId, setWhitnessDeptId]                       = useState(null)
   const [violator_id, setViolator]                                = useState(null)
   const [violator_nik, setViolatorNik]                            = useState(null)
   const [enforcer_id, setEnforcer]                                = useState(null)
@@ -59,41 +61,21 @@ const AddViolation = ({route, navigation}) => {
     const token = await AsyncStorage.getItem('key')
     setToken(token)
     setLoading(false)
+    const params = {
+      tbl: 'violation',
+      app_version: app_version,
+      sys_plant_id: sys_plant_id,
+      user_id: id
+    }
     const headers = {
       'Authorization': `${token}`, 
       'Content-Type': 'application/x-www-form-urlencoded', 
       'Cookie': '__profilin=p%3Dt'
     }
-		Axios.get('http://192.168.131.119:8080/v1/auths/sysaccount', {headers: headers})
+		Axios.get(`${base_url}/api/v2/hrds/new?`, {params: params, headers: headers})
 		.then(response => {
-			setUsers(response.data.data)
-			setLoading(true)
-		})
-		.catch(error => {
-      console.log(error)
-      Alert.alert(
-        "Error",
-        "Hubungi IT Department",
-        [
-          { text: "OK", onPress: () => console.log('Stop API') }
-        ],
-        { cancelable: false }
-      );
-			setLoading(true)
-		})
-  }
-
-  const getPenalties = async() => {
-    const token = await AsyncStorage.getItem('key')
-    setLoading(false)
-    const headers = {
-      'Authorization': `${token}`, 
-      'Content-Type': 'application/x-www-form-urlencoded', 
-      'Cookie': '__profilin=p%3Dt'
-    }
-		Axios.get('http://192.168.131.119:8080/v1/getpenalties', {headers: headers})
-		.then(response => {
-			setPenalties(response.data.data)
+      setCode(response.data.code)
+			setData(response.data.data)
 			setLoading(true)
 		})
 		.catch(error => {
@@ -125,12 +107,14 @@ const AddViolation = ({route, navigation}) => {
       description: description, 
       violation_time: violationTimeText,
       violation_date: violation_date,
-      item_image: item_image
+      item_image: item_image,
+      app_version: app_version,
+      tbl: 'violation',
+      user_id: id
     }
-    console.log(data)
 		var config = {
 			method: 'post',
-      url: 'http://192.168.131.119:8080/v1/hrd_violations',
+      url: `${base_url}/api/v2/hrds`,
 			headers: { 
 				'Authorization': `${token}`, 
 				'Content-Type': 'application/json', 
@@ -143,6 +127,7 @@ const AddViolation = ({route, navigation}) => {
       setLoading(true)
       navigation.navigate('HomeScreen')
       alert("Success Created!")
+      console.log('success save data')
     })
     .catch(function(error){
       console.log(error)
@@ -156,63 +141,6 @@ const AddViolation = ({route, navigation}) => {
         <Text>Save Violation</Text>
       </Button>
     )
-  }
-
-  const violatorChild = () => {
-    var data = []
-    data.push(
-      <Picker.Item label={"Pilih"} value={"0"} key={"AbcdkOWAK"} />
-    )
-    if(users.length > 0){
-      users.map((value, key) => {
-        data.push(
-          <Picker.Item label={value.name} value={value.id} key={key} />
-        )
-      })
-    }
-    return data
-  }
-
-  const getNik = (user_id, type) => {
-    setLoading(false)
-    if(type == "Violator"){
-      setViolator(user_id)
-    }else if(type == 'Enforcer'){
-      setEnforcer(user_id)
-    }else{
-      setWhitness(user_id)
-    }
-    const headers = {
-      'Authorization': `${tokenDua}`, 
-      'Content-Type': 'application/x-www-form-urlencoded', 
-      'Cookie': '__profilin=p%3Dt'
-    }
-    const params = {
-      user_id: user_id
-    }
-		Axios.get('http://192.168.131.119:8080/v1/auths/sysaccount/show', {params: params, headers: headers})
-		.then(response => {
-      if(type == "Violator"){
-        setViolatorNik(response.data.data.user.substr(1))
-      }else if(type == "Enforcer"){
-        setEnforcerNik(response.data.data.user.substr(1))
-      }else{
-        setWhitnessNik(response.data.data.user.substr(1))
-      }
-			setLoading(true)
-		})
-		.catch(error => {
-      console.log(error)
-      Alert.alert(
-        "Error",
-        "Hubungi IT Department",
-        [
-          { text: "OK", onPress: () => console.log('Stop API') }
-        ],
-        { cancelable: false }
-      );
-			setLoading(true)
-		})
   }
 
   const onChange = (event, val) => {
@@ -267,18 +195,22 @@ const AddViolation = ({route, navigation}) => {
   }
 
   const childPenalties = () => {
-    var data = []
-    if(penalties.length > 0){
-    data.push(
+    var arrData = []
+    arrData.push(
       <Picker.Item label={"Pilih"} value={"0"} key={"AbcdkOWAK"} />
     )
-      penalties.map((el, index) => {
-        data.push(
-          <Picker.Item label={el.name} value={el.id} key={index} />
-        )
-      })
+    if(code != null){
+      if(data != null){
+        if(data.penalty_list.length > 0){
+          data.penalty_list.map((value, key) => {
+            arrData.push(
+              <Picker.Item label={value.name} value={value.id} key={key} />
+            )
+          })
+        }
+      }
     }
-    return data
+    return arrData
   }
 
   const addItemImage = (value) => {
@@ -358,6 +290,213 @@ const AddViolation = ({route, navigation}) => {
     }
   }
 
+  const getDept = (val, type) => {
+    setLoading(false)
+    if(type == "Violator"){
+      setViolatorDeptId(val[0].id)
+      setLoading(true)
+    }else{
+      setWhitnessDeptId(val[0].id)
+      setLoading(true)
+    }
+    const params = {
+      tbl: 'employee',
+      app_version: app_version,
+      sys_plant_id: sys_plant_id,
+      sys_department_id: val[0].id,
+      user_id: id
+    }
+    const headers = {
+      'Authorization': `${token}`, 
+      'Content-Type': 'application/x-www-form-urlencoded', 
+      'Cookie': '__profilin=p%3Dt'
+    }
+		Axios.get(`${base_url}/api/v2/hrds?`, {params: params, headers: headers})
+		.then(response => {
+			getKaryawan(response.data.data != null ? response.data.data : null)
+			setLoading(true)
+		})
+		.catch(error => {
+      console.log(error)
+      Alert.alert(
+        "Error",
+        "Hubungi IT Department",
+        [
+          { text: "OK", onPress: () => console.log('Stop API') }
+        ],
+        { cancelable: false }
+      );
+			setLoading(true)
+		})
+  }
+
+  const getDeptDua = (val, type) => {
+    setLoading(false)
+    if(val.length > 0 || val != null){
+      if(type == "Violator"){
+        setViolatorDeptId(val[0].id)
+        setLoading(true)
+      }else if(type == 'Enforcer'){
+        setEnforcerDeptId(val[0].id)
+        setLoading(true)
+      }else{
+        setWhitnessDeptId(val[0].id)
+        setLoading(true)
+      }
+    }else{
+      val = null
+    }
+    const params = {
+      tbl: 'employee',
+      app_version: app_version,
+      sys_plant_id: sys_plant_id,
+      sys_department_id: val.length > 0 || val != null ? val[0].id : null,
+      user_id: id
+    }
+    const headers = {
+      'Authorization': `${token}`, 
+      'Content-Type': 'application/x-www-form-urlencoded', 
+      'Cookie': '__profilin=p%3Dt'
+    }
+		Axios.get(`${base_url}/api/v2/hrds?`, {params: params, headers: headers})
+		.then(response => {
+			getKaryawanDua(response.data.data != null ? response.data.data : null)
+			setLoading(true)
+		})
+		.catch(error => {
+      console.log(error)
+      Alert.alert(
+        "Error",
+        "Hubungi IT Department",
+        [
+          { text: "OK", onPress: () => console.log('Stop API') }
+        ],
+        { cancelable: false }
+      );
+			setLoading(true)
+		})
+  }
+
+  const GetSysDept = () => {
+    var arrData = []
+    arrData.push(
+      <Picker.Item label={"Pilih"} value={"0"} key={"AbcdkOWAK"} />
+    )
+    if(code != null){
+      if(data != null){
+        if(data.department_list.length > 0){
+          data.department_list.map((value, key) => {
+            const element = [{
+                id: value.id,
+                name:  value.name
+              }
+            ]
+            arrData.push(
+              <Picker.Item label={value.name} value={element} key={key} />
+            )
+          })
+        }
+      }
+    }
+    return arrData
+  }
+
+  const GetSysDeptDua = () => {
+    var arrData = []
+    arrData.push(
+      <Picker.Item label={"Pilih"} value={"0"} key={"AbcdkOWAK"} />
+    )
+    if(code != null){
+      if(data != null){
+        if(data.department_list.length > 0){
+          data.department_list.map((value, key) => {
+            const element = [{
+                id: value.id,
+                name:  value.name
+              }
+            ]
+            arrData.push(
+              <Picker.Item label={value.name} value={element} key={key} />
+            )
+          })
+        }
+      }
+    }
+    return arrData
+  }
+
+  const getNik = (val, type) => {
+    setLoading(false)
+    if(type == "Violator"){
+      setViolator(val[0].id)
+      setViolatorNik(val[0].nik)
+    }else if(type == 'Enforcer'){
+      setEnforcer(val[0].id)
+      setEnforcerNik(val[0].nik)
+    }else{
+      setWhitness(val[0].id)
+      setWhitnessNik(val[0].nik)
+    }
+    setLoading(true)
+  }
+
+  const getNikDua = (val, type) => {
+    setLoading(false)
+    if(type == "Violator"){
+      setViolator(val[0].id)
+      setViolatorNik(val[0].nik)
+    }else if(type == 'Enforcer'){
+      setEnforcer(val[0].id)
+      setEnforcerNik(val[0].nik)
+    }else{
+      setWhitness(val[0].id)
+      setWhitnessNik(val[0].nik)
+    }
+    setLoading(true)
+  }
+
+  const functionKaryawan = () => {
+    const data = []
+    if(whitnessDeptId != null){
+      if(karyawan != null){
+        if(karyawan.length > 0){
+          karyawan.map((val, i) => {
+            const element = [{
+                id: val.id,
+                nik:  val.nik
+              }
+            ]
+            data.push(
+              <Picker.Item key={i} value={element} label={val.name} />
+            )
+          })
+        }
+      }
+    }
+    return data
+  }
+
+  const functionKaryawanDua = () => {
+    const data = []
+    if(violatorDeptId != null){
+      if(karyawanDua != null){
+        if(karyawanDua.length > 0){
+          karyawanDua.map((val, i) => {
+            const element = [{
+                id: val.id,
+                nik:  val.nik
+              }
+            ]
+            data.push(
+              <Picker.Item key={i} value={element} label={val.name} />
+            )
+          })
+        }
+      }
+    }
+    return data
+  }
+
   const content = () => {
     return (
       <ScrollView>
@@ -367,7 +506,7 @@ const AddViolation = ({route, navigation}) => {
             <Text>Pelapor :</Text>
           </View>
           <View style={{paddingHorizontal: 10, paddingTop: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
-            <View style={{marginLeft: 15, paddingLeft: 5, borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center', backgroundColor: '#b8b8b8'}}>
               <Text>{name != null ? name : '-'}</Text>
             </View>
           </View>
@@ -399,12 +538,24 @@ const AddViolation = ({route, navigation}) => {
           <View style={{paddingHorizontal: 10, paddingTop: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
             <View style={{marginLeft: 15, paddingLeft: 5, borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
               <Picker 
+                selectedValue={whitnessDeptId}
+                style={{ height: 40, width: 400, color: 'black' }}
+                itemStyle={{height: 20}}
+                onValueChange={(itemValue, itemIndex) => getDept(itemValue, "Whitness")}
+              >
+                {GetSysDept()}
+              </Picker>
+            </View>
+          </View>
+          <View style={{paddingHorizontal: 10, paddingTop: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Picker 
                 selectedValue={whitness_id}
                 style={{ height: 40, width: 400, color: 'black' }}
                 itemStyle={{height: 20}}
                 onValueChange={(itemValue, itemIndex) => getNik(itemValue, "Whitness")}
               >
-                {violatorChild()}
+                {functionKaryawan()}
               </Picker>
             </View>
           </View>
@@ -423,14 +574,26 @@ const AddViolation = ({route, navigation}) => {
           <View style={{paddingHorizontal: 10, paddingTop: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
             <View style={{marginLeft: 15, paddingLeft: 5, borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
               <Picker 
+                selectedValue={violatorDeptId}
+                style={{ height: 40, width: 400, color: 'black' }}
+                itemStyle={{height: 20}}
+                onValueChange={(itemValue, itemIndex) => getDeptDua(itemValue, "Violator")}
+              >
+                {GetSysDeptDua()}
+              </Picker>
+            </View>
+          </View>
+      
+          <View style={{paddingHorizontal: 10, paddingTop: 10, flexDirection: 'row', flex: 1, justifyContent: 'flex-end'}}>
+            <View style={{marginLeft: 15, paddingLeft: 5, borderWidth: 0.5, borderRadius: 5, width: '70%', height: 40, justifyContent: 'center'}}>
+              <Picker 
                 selectedValue={violator_id}
                 style={{ height: 40, width: 400, color: 'black' }}
                 itemStyle={{height: 20}}
-                onValueChange={(itemValue, itemIndex) => getNik(itemValue, "Violator")}
+                onValueChange={(itemValue, itemIndex) => getNikDua(itemValue, "Violator")}
               >
-                {violatorChild()}
+                {functionKaryawanDua()}
               </Picker>
-              {/* <TextInput value={remark} onChangeText={(value) => setRemark(value)} style={{paddingLeft: 5, height: 40, width: 177}} placeholder="Type Here..." /> */}
             </View>
           </View>
         

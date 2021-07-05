@@ -1,7 +1,8 @@
-import React, {useEffect} from 'react';
-import {View, Image, StyleSheet} from 'react-native';
-import {Text} from 'native-base';
+import React, {useEffect} from 'react'
+import {View, Image, StyleSheet} from 'react-native'
+import {Text} from 'native-base'
 import LogoSIP from '../Assets/logo-sip3.png'
+import app_version from '../System/app_version'
 
 const SplashScreen = ({navigation}) => {
 	useEffect(() => {
@@ -16,7 +17,7 @@ const SplashScreen = ({navigation}) => {
 				<Image style={{borderTopRightRadius: 20, height: 145, width: 200 }} source={LogoSIP} />
 			</View>
 			<View style={{justifyContent: "center", alignItems: 'center', paddingBottom: 15}}>
-				<Text style={{fontWeight: 'bold', fontSize: 11, color: '#64656e'}}>Current Version: KOntol</Text>
+				<Text style={{fontWeight: 'bold', fontSize: 11, color: '#64656e'}}>Current Version: {app_version}</Text>
 			</View>
 		</View>
 	)

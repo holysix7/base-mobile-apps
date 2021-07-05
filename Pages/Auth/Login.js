@@ -7,6 +7,9 @@ import Axios from 'axios';
 import messaging from '@react-native-firebase/messaging';
 import DeviceStorage from '../System/DeviceStorage';
 import Session from '../System/Session';
+import base_url from '../System/base_url';
+import app_version from '../System/app_version';
+import app_name from '../System/app_name';
 
 const Login = ({navigation}) => {
 	const [user, setUser] = useState("");
@@ -44,21 +47,16 @@ const Login = ({navigation}) => {
 		const data = {
 			user,
 			password,
+			app_version,
+			app_name
 		}
-		Axios.post('http://192.168.131.119:8080/v1/auths', data)
+		Axios.post(`${base_url}/signin`, data)
 		.then(res => {
       if(res.data.data != null){
         setLoading(true)
-        DeviceStorage(res.data.token)
+        DeviceStorage(res.data.data.token)
 				Session(res.data.data)
-        Alert.alert(
-          "Info",
-          "Login Berhasil",
-          [
-            { text: "OK", onPress: () => navigation.replace('HomeScreen') }
-          ],
-          { cancelable: false }
-        );
+				navigation.replace('HomeScreen')
       }else{
         setLoading(true)
         console.log("response: ", res.data.data)
